@@ -24,12 +24,10 @@ class _CompHomeState extends State<CompHome> {
       if (_selectedIndexCompanyHome == 1) {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const CompanyProfile()),);
+          MaterialPageRoute(builder: (context) => const CompanyProfile(firstName: '',)),);
       }
     }
   }
-
-
 
     List<bool> isSelected = [false, false, false, false];
   void selectEmoji(int index){

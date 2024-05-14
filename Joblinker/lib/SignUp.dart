@@ -1,70 +1,68 @@
-
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
-import 'Login.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:joblinker/Login.dart';
 
 class Signup extends StatefulWidget {
-
   @override
   _SignupState createState() => _SignupState();
 }
-class _SignupState extends State<Signup> {
 
+class _SignupState extends State<Signup> {
   var email_cont = TextEditingController();
   var pass_cont = TextEditingController();
   var name_cont = TextEditingController();
   var _userType;
 
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-//////////////////////////// User Register in firebase ////////////////////
-
-  Future<void> UserRegister() async {
+  void _signUp() async {
     try {
-      UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: email_cont.text.trim(),
-        password: pass_cont.text.trim(),
+      final UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
+        email: email_cont.text,
+        password: pass_cont.text,
       );
 
-      // Add user data to Firestore
-      await FirebaseFirestore.instance.collection('users').doc(userCredential.user!.uid).set({
-        'firstName': name_cont.text.trim(),
+      // Add user details to Firestore based on user type
+      await _firestore.collection(_userType).doc(userCredential.user!.uid).set({
+        'email': email_cont.text,
+        'firstName': name_cont.text,
         'userType': _userType,
-      });
+      }
+      );
 
-      // Navigate to appropriate home screen based on user type
       if (_userType == 'company') {
-        Navigator.pushReplacementNamed(context, '/companyHome');
+        print('Navigating to company home screen');
+        navigate_to_companyHome(); // Navigate to company home screen
       } else if (_userType == 'employee') {
-        Navigator.pushReplacementNamed(context, '/employeeHome');
+        print('Navigating to employee home screen');
+        navigate_to_employeeHome(); // Navigate to employee home screen
       }
     } catch (e) {
       // Handle sign-up errors
-      print('Error registering user: $e');
-      // You can show a snackbar or display an error message to the user
+      print(e.toString());
     }
   }
+  void navigate_to_employeeHome() {
+    Navigator.of(context).pushReplacementNamed("employeeHome");  }
 
-
-
-
-///////////////////////////////////////////////////////////
+  void navigate_to_companyHome() {
+    Navigator.of(context).pushReplacementNamed("companyHome");
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.white, leading: GestureDetector(
+        backgroundColor: Colors.white,
+        leading: GestureDetector(
           onTap: (){
-            Navigator.pop(
-              context,
-              MaterialPageRoute(builder: (context) => Login()),
-            );
-            },
-          child: Icon(Icons.arrow_back_sharp,color: Colors.black)),
+            Navigator.of(context).pushReplacementNamed("login");
+          },
+          child: Icon(Icons.arrow_back_sharp, color: Colors.black),
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -74,19 +72,17 @@ class _SignupState extends State<Signup> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-
                   "SignUP",
                   style: TextStyle(
                     fontSize: 26.0,
-                    fontWeight: FontWeight.bold ,
-
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
 
                 SizedBox(
                   height: 16.0,
                 ),
-                ///////////////// name   ///////////////
+                /////////name////////
                 TextFormField(
                   controller: name_cont,
                   keyboardType: TextInputType.name,
@@ -95,12 +91,11 @@ class _SignupState extends State<Signup> {
                   },
                   decoration: InputDecoration(
                     focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.teal)
+                        borderSide: BorderSide(color: Colors.teal)
                     ),
                     border: OutlineInputBorder(),
                     labelText: "User Name",
                     labelStyle: TextStyle(color: Colors.teal),
-
                   ),
                 ),
                 SizedBox(
@@ -213,7 +208,7 @@ class _SignupState extends State<Signup> {
                             Text(
                               'Employee',
                               style: TextStyle(
-                                fontSize: 16.0,
+                                fontSize : 16.0,
                                 color: _userType == 'employee'
                                     ? Colors.teal[200]
                                     : Colors.grey,
@@ -227,26 +222,20 @@ class _SignupState extends State<Signup> {
                 ),
                 SizedBox(height: 32.0),
 
-                /////////////////////////// Register button ////////////////////
+                ///////////////////////////
                 Container(
                   width: double.infinity,
 
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
-                    onPressed: () {
-
-                      UserRegister();
-
-
-                    },
-                    child: Text(
+                    onPressed: _signUp,
+                    child:Text(
                       "Register",
                       style: TextStyle(
                         fontSize: 18.0,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
-
-                      )
+                      ),
                     ),
                   ),
                 ),

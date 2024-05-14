@@ -1,8 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:joblinker/storage_cv.dart';
-//import 'package:test1/storage_cv.dart';
-// import 'package:test1/Screen_home.dart';
 import 'Job_text_field.dart';
 
 import 'empoloyee_home.dart';

@@ -1,17 +1,14 @@
-// ignore_for_file: prefer_const_constructors, prefer_interpolation_to_compose_strings
-
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 import 'empoloyee_home.dart';
 
-
 class Jobs extends StatelessWidget {
-  final icon;
+  final IconData icon;
   final String job;
   final String CName;
   final String details;
+
   const Jobs({
     Key? key,
     required this.icon,
@@ -20,6 +17,29 @@ class Jobs extends StatelessWidget {
     required this.details,
   }) : super(key: key);
 
+  // Method to retrieve CV files from Firebase Storage
+  Future<List<String>> getCvFilesFromStorage() async {
+    // Initialize Firebase Storage
+    final storage = FirebaseStorage.instance;
+
+    // Reference to the folder containing CV files in Firebase Storage
+    final cvFolderRef = storage.ref().child('cvs');
+
+    // List to store CV file URLs
+    List<String> cvFileUrls = [];
+
+    // Get the list of items (CV files) in the folder
+    final ListResult result = await cvFolderRef.listAll();
+
+    // Iterate through the items and get the download URL for each CV file
+    await Future.forEach(result.items, (Reference ref) async {
+      String downloadUrl = await ref.getDownloadURL();
+      cvFileUrls.add(downloadUrl);
+    });
+
+    return cvFileUrls;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -27,173 +47,132 @@ class Jobs extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadiusDirectional.circular(16)),
+          color: Colors.white,
+          borderRadius: BorderRadiusDirectional.circular(16),
+        ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Row(
               children: [
                 Container(
-                    padding: EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                        color: Colors.grey.withOpacity(.2),
-                        borderRadius: BorderRadius.circular(12)),
-                    child: Icon(
-                      icon,
-                      color: Colors.black,
-                    )),
-                SizedBox(
-                  width: 12,
+                  padding: EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withOpacity(.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: Colors.black,
+                  ),
                 ),
+                SizedBox(width: 12),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       CName,
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    SizedBox(
-                      height: 5,
-                    ),
+                    SizedBox(height: 5),
                     Text(
                       job,
                       style: TextStyle(
-                          fontWeight: FontWeight.bold, color: Colors.grey[600]),
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[600],
+                      ),
                     ),
                   ],
                 ),
               ],
             ),
             GestureDetector(
-              onTap: () {
-                // showModalBottomSheet(
-                //   context: context,
-                //   builder: (BuildContext) {
-                //     return Container(
-                //       width: MediaQuery.of(context).size.width - 40,
-                //       height: MediaQuery.of(context).size.height*0.45,
-                //       padding: EdgeInsets.all(20.0),
-                //
-                //       decoration: BoxDecoration(color: Colors.white,
-                //       borderRadius: BorderRadius.only(
-                //         topLeft: Radius.circular(20.0),
-                //         topRight: Radius.circular(20.0)
-                //       )),
-                //       child: Column(
-                //         crossAxisAlignment: CrossAxisAlignment.start,
-                //         children: [
-                //           Text(job,
-                //               style: TextStyle(
-                //                   fontSize: 24, fontWeight: FontWeight.bold)),
-                //           SizedBox(height: 10),
-                //           Text(
-                //               details,
-                //               style: TextStyle(fontSize: 18)),
-                //               Spacer(),
-                //               Row(
-                //                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                //                 children: [
-                //                   Expanded(
-                //                     child: ElevatedButton(
-                //                       onPressed:(){
-                //                        Navigator.pop(context);
-                //                       },
-                //                       style: ElevatedButton.styleFrom(
-                //                         backgroundColor: Colors.white,
-                //                       ),
-                //                        child: Text('Cancel',style: TextStyle(color: Colors.black),)
-                //                       ),
-                //                   ),
-                //                   SizedBox(width: 7,),
-                //                     Expanded(
-                //                       child: ElevatedButton(
-                //                         onPressed:(){},
-                //                         style: ElevatedButton.styleFrom(
-                //                           backgroundColor: Colors.blue,
-                //                         ),
-                //                          child: Text('Apply',style: TextStyle(color: Colors.white),)),
-                //                     )
-                //                 ],
-                //               )
-                //         ],
-                //       ),
-                //     );
-                //   },
-                // );
-                // omar viewontap
+              onTap: () async {
+                // Retrieve CV files from Firebase Storage
+                List<String> cvFileUrls = await getCvFilesFromStorage();
+
+                // Display the list of CV files
                 showModalBottomSheet(
                   context: context,
-                  builder: ( BuildContext Context){
-                    return Column(
-                      children: [
+                  builder: (BuildContext context) {
+                    return StatefulBuilder(
+                      builder: (BuildContext context, StateSetter setState) {
+                        return Container(
+                          padding: EdgeInsets.all(20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Choose a CV',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              SizedBox(height: 20),
+                              Expanded(
+                                child: ListView.builder(
+                                  itemCount: cvFileUrls.length,
+                                  itemBuilder: (BuildContext context, int index) {
+                                    return ListTile(
+                                      title: Text('CV ${index + 1}'),
+                                      onTap: () {
+                                        // Handle the selected CV file
+                                        String selectedCvUrl = cvFileUrls[index];
+                                        print('Selected CV URL: $selectedCvUrl');
+                                        // Close the bottom sheet
+                                        Navigator.pop(context);
+                                      },
+                                    );
+                                  },
+                                ),
+                              ),
+                              SizedBox(height: 20),
+                              Align(
+                                alignment: Alignment.center,
+                                child:
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
+                                  onPressed: (){
 
-                        Container(
-                            height: 135,
-                            width: 300,
-                            alignment: Alignment.topCenter,
-                            margin: const EdgeInsets.symmetric(vertical: 30,horizontal: 30),
-                            padding:  const EdgeInsets.only(top: 15),
-                            decoration: BoxDecoration(borderRadius: BorderRadius.circular(20.0),color:Colors.teal.withOpacity(.1) ),
-                            child: const Column(
-                              children: [
-                                Text("Job Details ",style: TextStyle(color: Colors.black,fontSize: 20),),
-                                // details that come from requirements
-                                SizedBox(height: 40,),
-                                Text("details that come from requirements "),
+                                  Navigator.pop(context,EmployeeHome());
+                                  },
 
-                              ],
-                            )),
-
-
-
-                        Container(
-                          margin: const EdgeInsets.symmetric(vertical: 30,horizontal: 30),
-                          padding:  const EdgeInsets.symmetric(vertical: 15,horizontal: 5),
-                          decoration: BoxDecoration(borderRadius: BorderRadius.circular(20.0),color:Colors.teal.withOpacity(.1) ),
-                          child:  Row(
-                              children: [
-                                const Expanded(child: Padding(
-                                  padding: EdgeInsets.only(left: 25),
-                                  child: Text("Choose Cv",style: TextStyle(color: Colors.black,fontSize: 25),),
-                                )),
-                                Expanded(child: GestureDetector(
-                                    onTap: (){
-                                      // go to choose Cv from Storage Cv
-                                    },
-                                    child: const Icon( Icons.upload,size: 25,)))
-                              ]
-                          ) ,),
-
-                        SizedBox(height: 50,
-                          child: Center(child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              padding: EdgeInsets.symmetric(vertical: 15,horizontal: 110),
-                              backgroundColor: Colors.teal.withOpacity(.8),),
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (context) => EmployeeHome()),
-                                /// done  send chossen cv to company Request
-                              );
-                            },
-                            child: const Text("Done"),),),),
-                      ],
+                                  child:Text(
+                                    "Done",
+                                    style: TextStyle(
+                                      fontSize: 15.0,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
                     );
-                  },);
+                  },
+                );
               },
               child: Container(
                 padding: EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                    color: Colors.grey.withOpacity(.2),
-                    borderRadius: BorderRadius.circular(20)),
+                  color: Colors.grey.withOpacity(.2),
+                  borderRadius: BorderRadius.circular(20),
+                ),
                 child: Text(
                   "Apply",
                   style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold),
+                    fontSize: 12,
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),

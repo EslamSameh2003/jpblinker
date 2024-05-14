@@ -1,11 +1,14 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'Job_text_field.dart';
 import 'comp_home.dart';
-
+import 'global_variables.dart'; // Import the global variables file
 
 class CompanyProfile extends StatefulWidget {
-  const CompanyProfile({super.key});
+  final String firstName;
+
+  const CompanyProfile({Key? key, required this.firstName}) : super(key: key);
 
   @override
   State<CompanyProfile> createState() => _CompanyProfileState();
@@ -17,9 +20,8 @@ class _CompanyProfileState extends State<CompanyProfile> {
   TextEditingController _phoneController = TextEditingController();
   TextEditingController _emailController = TextEditingController();
 
-  TextEditingController jobController =TextEditingController();
-  TextEditingController requirementController  =TextEditingController();
-
+  TextEditingController jobController = TextEditingController();
+  TextEditingController requirementController = TextEditingController();
 
   bool _isEditing = false;
 
@@ -32,7 +34,6 @@ class _CompanyProfileState extends State<CompanyProfile> {
     _phoneController.text = '';
     _emailController.text = '';
   }
-
   int _selectedIndexCompanyProfile = 1;
 
   void _onItemTappedCompanyProfile(int index) {
@@ -49,7 +50,6 @@ class _CompanyProfileState extends State<CompanyProfile> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -60,20 +60,21 @@ class _CompanyProfileState extends State<CompanyProfile> {
             children: [
               CircleAvatar(
                 radius: 70.0,
-                child:Image.asset("lib/images/company1.jpeg") ,
-                // backgroundImage: Image.asset("lib/images/company1.jpeg"),
+                child: Image.asset("lib/images/company1.jpeg"),
               ),
-              SizedBox(height: 50,),
-              _buildProfileField('Name', _nameController, CupertinoIcons.person),
-              SizedBox(height: 20,),
-              _buildProfileField('Address', _addressController, CupertinoIcons.location),
-              SizedBox(height: 20,),
-              _buildProfileField('Phone', _phoneController, CupertinoIcons.phone),
-              SizedBox(height: 20,),
-              _buildProfileField('Email', _emailController, CupertinoIcons.mail),
-              SizedBox(height: 20,),
-
-
+              SizedBox(height: 50),
+              _buildProfileField(
+                  'Name', _nameController, CupertinoIcons.person),
+              SizedBox(height: 20),
+              _buildProfileField(
+                  'Address', _addressController, CupertinoIcons.location),
+              SizedBox(height: 20),
+              _buildProfileField(
+                  'Phone', _phoneController, CupertinoIcons.phone),
+              SizedBox(height: 20),
+              _buildProfileField(
+                  'Email', _emailController, CupertinoIcons.mail),
+              SizedBox(height: 20),
               Container(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -102,69 +103,75 @@ class _CompanyProfileState extends State<CompanyProfile> {
                   ),
                 ),
               ),
-
-              SizedBox(height: 20,),
-
+              SizedBox(height: 20),
               ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(vertical: 15,horizontal: 110),
-                    backgroundColor: Colors.teal.withOpacity(.8),),
-
-                  onPressed: (){
-                    showModalBottomSheet(
-                      context: context,
-                      builder: ( BuildContext Context){
-                        return Column(
-                          children: [
-                            SizedBox(height: 30,),
-
-                            Padding(
-                              padding: const  EdgeInsets.symmetric(horizontal: 30,),
-                              child: JobTextField(
-                                hintText: "Title",
-                                controller:jobController ,
+                style: ElevatedButton.styleFrom(
+                  padding: EdgeInsets.symmetric(vertical: 15, horizontal: 110),
+                  backgroundColor: Colors.teal.withOpacity(.8),
+                ),
+                onPressed: () {
+                  showModalBottomSheet(
+                    context: context,
+                    builder: (BuildContext Context) {
+                      return Column(
+                        children: [
+                          SizedBox(height: 30),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 30),
+                            child: JobTextField(
+                              hintText: "Title",
+                              controller: jobController,
+                            ),
+                          ),
+                          SizedBox(height: 30),
+                          JobTextField(
+                            hintText: "Add Requirements",
+                            controller: requirementController,
+                          ),
+                          SizedBox(
+                            height: 150,
+                            child: Center(
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  padding: EdgeInsets.symmetric(vertical: 15, horizontal: 40),
+                                  backgroundColor: Colors.teal,
+                                ),
+                                onPressed: () {
+                                  // Save job details to Firestore
+                                  _saveJobDetails(jobController.text, requirementController.text, widget.firstName);
+                                  // Close the bottom sheet
+                                  Navigator.pop(context);
+                                },
+                                child: const Text("Done"),
                               ),
                             ),
-
-                            SizedBox(height: 30,),
-                            JobTextField(
-                              hintText: "Add Requirements",
-                              controller: requirementController,
-                            ),
-
-                            SizedBox(
-                              height: 150,
-                              child: Center(child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  padding: EdgeInsets.symmetric(vertical: 15,horizontal: 40),
-                                  backgroundColor: Colors.teal,),
-                                onPressed: () {  },
-                                child: const Text("Done"),),),),
-                          ],
-                        );
-                      },);
-                  },
-                  child: const Text("Add Job",style: TextStyle(color: Colors.black),)
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+                child: const Text(
+                  "Add Job",
+                  style: TextStyle(color: Colors.black),
+                ),
               ),
             ],
           ),
         ),
       ),
-
-      /////////////////////////Navigation Bar (myprofile & Home Screen)
       bottomNavigationBar: BottomNavigationBar(
         selectedItemColor: Colors.teal[200],
         iconSize: 30.0,
         currentIndex: _selectedIndexCompanyProfile,
-        onTap:_onItemTappedCompanyProfile,
+        onTap: _onItemTappedCompanyProfile,
         items: [
-          BottomNavigationBarItem(label: "Comapny Home",icon: Icon(Icons.home)),
-          BottomNavigationBarItem(label: "Company Profile",icon: Icon(Icons.person)),
+          BottomNavigationBarItem(label: "Comapny Home", icon: Icon(Icons.home)),
+          BottomNavigationBarItem(label: "Company Profile", icon: Icon(Icons.person)),
         ],
       ),
     );
   }
-
 
   Widget _buildProfileField(String title, TextEditingController controller, IconData iconData) {
     return Container(
@@ -199,5 +206,26 @@ class _CompanyProfileState extends State<CompanyProfile> {
     );
   }
 
+  void _saveJobDetails(String title, String requirements, String firstName) async {
+    try {
+      // Add job details to Firestore
+      await FirebaseFirestore.instance.collection('jobs').add({
+        'title': title,
+        'requirements': requirements,
+        'firstName': globalFirstName, // Use globalFirstName variable
+        // Add more fields as needed
+      });
+      // Show a success message or perform other actions if needed
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Job added successfully')),
+      );
+    } catch (e) {
+      // Handle errors
+      print('Error adding job: $e');
+      // Show an error message or perform other actions if needed
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to add job')),
+      );
+    }
+  }
 }
-
